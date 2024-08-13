@@ -1,7 +1,7 @@
 [
   {
     "__type__": "cc.Prefab",
-    "_name": "ToHireCharacterUI",
+    "_name": "ChooseCharacterUI",
     "_objFlags": 0,
     "__editorExtras__": {},
     "_native": "",
@@ -13,7 +13,7 @@
   },
   {
     "__type__": "cc.Node",
-    "_name": "ToHireCharacterUI",
+    "_name": "ChooseCharacterUI",
     "_objFlags": 0,
     "__editorExtras__": {},
     "_parent": null,
@@ -35,10 +35,13 @@
       },
       {
         "__id__": 22
+      },
+      {
+        "__id__": 24
       }
     ],
     "_prefab": {
-      "__id__": 24
+      "__id__": 26
     },
     "_lpos": {
       "__type__": "cc.Vec3",
@@ -549,6 +552,33 @@
   {
     "__type__": "cc.CompPrefabInfo",
     "fileId": "4a0R6bbx1GyZt0bP/5/x9l"
+  },
+  {
+    "__type__": "5c170f2vQVK37n8BEDY8VMc",
+    "_name": "",
+    "_objFlags": 0,
+    "__editorExtras__": {},
+    "node": {
+      "__id__": 1
+    },
+    "_enabled": true,
+    "__prefab": {
+      "__id__": 25
+    },
+    "rank": {
+      "__id__": 5
+    },
+    "type": {
+      "__id__": 11
+    },
+    "character": {
+      "__id__": 17
+    },
+    "_id": ""
+  },
+  {
+    "__type__": "cc.CompPrefabInfo",
+    "fileId": "92C06t/xJDsKGxGx/lBWN2"
   },
   {
     "__type__": "cc.PrefabInfo",
