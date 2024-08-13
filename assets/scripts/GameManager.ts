@@ -1,9 +1,10 @@
-import { _decorator, Component, Node, warn, UITransform, Widget, tween, Vec3 } from 'cc';
+import { _decorator, Component, Node, warn, JsonAsset, resources, SpriteFrame } from 'cc';
 const { ccclass, property } = _decorator;
 
 import { CurrencyUI } from "./ui/CurrencyUI";
 import { TowerUI } from "./ui/TowerUI";
 import { InfoUI } from "./ui/InfoUI";
+import { HirePanelUI } from "./ui/HirePanelUI";
 
 enum GameState {
     Gameplay,
@@ -13,8 +14,8 @@ enum GameState {
 
 @ccclass('GameManager')
 export class GameManager extends Component {
-    @property(CurrencyUI)
-    public currencyUI: CurrencyUI = null!;
+    @property(HirePanelUI)
+    public hirePanelUI: HirePanelUI = null!;
 
     @property(TowerUI)
     public towerUI: TowerUI = null!;
@@ -22,55 +23,76 @@ export class GameManager extends Component {
     @property(InfoUI)
     public infoUI: InfoUI = null!;
 
+    @property(CurrencyUI)
+    public currencyUI: CurrencyUI = null!;
+
     @property(Node)
     public panelNode: Node = null!;
-    initialPanelY: Vec3;
-    visiblePanelY: Vec3;
 
     gameState: GameState = GameState.Gameplay;
+
+    public buildings: Array<Object> = null!;
+    public heroes: Array<Object> = null!;
+
+    public heroesSpriteDict: Object = null!;
+    public heroesUIDict: Object = null!;
 
     onLoad() {
         this.towerUI.init(this);
         this.infoUI.init(this);
 
-        let panelTransform = this.panelNode.getComponent(UITransform);
-        this.initialPanelY = this.panelNode.position.y;
-        this.visiblePanelY = this.initialPanelY + panelTransform.height;
+        resources.loadDir('settings', JsonAsset, (err, jsonAssets) => {
+            for (let data of jsonAssets) {
+                if (data.name === "buildings") {
+                    this.buildings = data.json.buildings;
+                }
+                else if (data.name === "heroes") {
+                    this.heroes = data.json.heroes;
+                }
+                else if (data.name === "initial_state") {
+                    let test = "";
+                }
+            }
+        });
+
+        resources.loadDir('heroes/ui', SpriteFrame, (err, sprites) => {
+            this.heroesUIDict = Object.fromEntries(sprites.map(sprite => [sprite.name, sprite]));
+        });
+
+        resources.loadDir('heroes/sprite', SpriteFrame, (err, sprites) => {
+            this.heroesSpriteDict = Object.fromEntries(sprites.map(sprite => [sprite.name, sprite]));
+        });
     }
 
-    openHirePanel() {
-        let currentPanelY = this.panelNode.position.y;
-        let panelTransform = this.panelNode.getComponent(UITransform);
-        let targetY = this.panelNode.position.y;
+    start() {
+    }
+
+    loadHeroes(data: json) {
+        for (let entry of data.heroes) {
+            console.log(entry.id);
+            console.log(entry.name);
+            console.log(entry.description);
+        }
+    }
+
+    toggleHirePanel() {
         let valid = (this.gameState === GameState.Gameplay) || (this.gameState === GameState.HirePanel);
-        if (this.gameState === GameState.Gameplay) {
-            let targetTmp = this.initialPanelY - currentPanelY;
-            targetY += (panelTransform.height - targetTmp);
-
-            this.gameState = GameState.HirePanel;
-        }
-        else if (this.gameState === GameState.HirePanel) {
-            let targetTmp = this.visiblePanelY - currentPanelY;
-            targetY -= (panelTransform.height - targetTmp);
-
-            this.gameState = GameState.Gameplay;
-        }
-
         if (valid) {
-            let tweenDuration: number = 0.25;                                    // Duration of tween
-            tween(this.panelNode.position)
-                .to(tweenDuration, new Vec3(0, targetY, 0), {
-                    onUpdate: (target: Vec3, _: number) => {
-                        this.panelNode.position = target;
-                    }
-                }).start();
+            if (this.gameState === GameState.Gameplay) {
+                this.gameState = GameState.HirePanel;
+
+                if (!this.hirePanelUI.initialized) {
+                    this.hirePanelUI.init(this);
+                }
+                this.hirePanelUI.show();
+            }
+            else if (this.gameState === GameState.HirePanel) {
+                this.gameState = GameState.Gameplay;
+                this.hirePanelUI.hide();
+            }
         }
     }
 
-    openInfoPanel() {
-        console.log("Trying to open info panel");
-
-        if (this.gameState === GameState.Gameplay) {
-        }
+    toggleInfoPanel() {
     }
 }
