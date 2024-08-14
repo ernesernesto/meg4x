@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Vec3, UITransform, tween, Label, Prefab, instantiate } from 'cc';
+import { _decorator, Component, Node, Vec3, UITransform, tween, Label, Prefab, instantiate, Input } from 'cc';
 const { ccclass, property } = _decorator;
 
 import { GameManager } from "../GameManager"
@@ -24,6 +24,12 @@ export class HirePanelUI extends Component {
 
     @property(Prefab)
     chooseCharacterPrefab: Prefab = null!;
+
+    @property(Node)
+    backgroundNode: Node = null!;
+
+    @property(Node)
+    buttonNode: Node = null!;
 
     public initialized: boolean;
 
@@ -64,40 +70,55 @@ export class HirePanelUI extends Component {
             chooseCharacterUI.init(this.gameManager.heroesSpriteDict, this.gameManager.heroesUIDict, hero);
         }
 
-        this.panelTransform = this.node.getComponent(UITransform);
-        this.initialPanelY = this.node.position.y;
+        this.panelTransform = this.backgroundNode.getComponent(UITransform);
+        this.initialPanelY = this.backgroundNode.position.y;
         this.visiblePanelY = this.initialPanelY + this.panelTransform.height;
 
         this.tweenDuration = 0.25;
+
+        this.backgroundNode.on(Input.EventType.MOUSE_UP, this.onClickBackground, this);
+        this.buttonNode.on(Input.EventType.MOUSE_UP, this.onHirePressed, this);
 
         this.initialized = true;
     }
 
     show() {
-        let currentPanelY = this.node.position.y;
+        let currentPanelY = this.backgroundNode.position.y;
         let targetTmp = this.initialPanelY - currentPanelY;
         let targetY = currentPanelY + (this.panelTransform.height - targetTmp);
 
-        tween(this.node.position)
+        tween(this.backgroundNode.position)
             .to(this.tweenDuration, new Vec3(0, targetY, 0), {
                 onUpdate: (target: Vec3, _: number) => {
-                    this.node.position = target;
+                    this.backgroundNode.position = target;
                 }
             }).start();
     }
 
     hide() {
-        let currentPanelY = this.node.position.y;
+        let currentPanelY = this.backgroundNode.position.y;
         let targetTmp = this.visiblePanelY - currentPanelY;
         let targetY = currentPanelY - (this.panelTransform.height - targetTmp);
 
 
-        tween(this.node.position)
+        tween(this.backgroundNode.position)
             .to(this.tweenDuration, new Vec3(0, targetY, 0), {
                 onUpdate: (target: Vec3, _: number) => {
-                    this.node.position = target;
+                    this.backgroundNode.position = target;
                 }
             }).start();
     }
 
+    onClickBackground(event: EventMouse) {
+        if (event.getButton() === 0) {
+            this.gameManager.toggleHirePanel();
+        }
+    }
+
+    onHirePressed(event: EventMouse) {
+        if (event.getButton() === 0) {
+            this.gameManager.toggleHirePanel();
+            console.log("hire pressed");
+        }
+    }
 }

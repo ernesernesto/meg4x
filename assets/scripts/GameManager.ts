@@ -5,6 +5,7 @@ import { CurrencyUI } from "./ui/CurrencyUI";
 import { TowerUI } from "./ui/TowerUI";
 import { InfoUI } from "./ui/InfoUI";
 import { HirePanelUI } from "./ui/HirePanelUI";
+import { InfoPanelUI } from "./ui/InfoPanelUI";
 
 enum GameState {
     Gameplay,
@@ -17,6 +18,9 @@ export class GameManager extends Component {
     @property(HirePanelUI)
     public hirePanelUI: HirePanelUI = null!;
 
+    @property(InfoPanelUI)
+    public infoPanelUI: InfoPanelUI = null!;
+
     @property(TowerUI)
     public towerUI: TowerUI = null!;
 
@@ -25,9 +29,6 @@ export class GameManager extends Component {
 
     @property(CurrencyUI)
     public currencyUI: CurrencyUI = null!;
-
-    @property(Node)
-    public panelNode: Node = null!;
 
     gameState: GameState = GameState.Gameplay;
 
@@ -94,5 +95,20 @@ export class GameManager extends Component {
     }
 
     toggleInfoPanel() {
+        let valid = (this.gameState === GameState.Gameplay) || (this.gameState === GameState.InfoPanel);
+        if (valid) {
+            if (this.gameState === GameState.Gameplay) {
+                this.gameState = GameState.InfoPanel;
+
+                if (!this.infoPanelUI.initialized) {
+                    this.infoPanelUI.init(this);
+                }
+                this.infoPanelUI.node.active = true;
+            }
+            else if (this.gameState === GameState.InfoPanel) {
+                this.gameState = GameState.Gameplay;
+                this.infoPanelUI.node.active = false;
+            }
+        }
     }
 }
