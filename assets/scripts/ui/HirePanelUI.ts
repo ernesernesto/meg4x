@@ -42,8 +42,9 @@ export class HirePanelUI extends Component {
     gameManager: GameManager = null!;
 
     public hiredCharacterSlots: HiredCharacterUI[] = [];
+    chooseCharacterUIs: ChooseCharacterUI[] = [];
 
-    selectedHero: Object;
+    selectedHeroIndex: number = -1;
 
     initialPanelY: number;
     visiblePanelY: number;
@@ -78,10 +79,10 @@ export class HirePanelUI extends Component {
             node = instantiate(this.chooseCharacterPrefab);
             this.hireScrollView.content.addChild(node);
 
-            let hero = gameManager.heroes[i];
-            let spriteData = this.gameManager.getHeroSprites(hero);
             let chooseCharacterUI = node.getComponent(ChooseCharacterUI);
-            chooseCharacterUI.init(this, spriteData);
+            chooseCharacterUI.init(this, this.gameManager, i);
+
+            this.chooseCharacterUIs.push(chooseCharacterUI);
         }
 
         this.hireScrollView.content.getComponent(UITransform).width = (node.getComponent(UITransform).width * heroes.length);
@@ -136,7 +137,7 @@ export class HirePanelUI extends Component {
 
     onHirePressed(event: EventMouse) {
         if (event.getButton() === 0) {
-            this.gameManager.hireHero(this.selectedHero);
+            this.gameManager.hireHero(this.selectedHeroIndex);
         }
     }
 
@@ -149,10 +150,17 @@ export class HirePanelUI extends Component {
         this.labelPrice.color = color;
     }
 
-    setSelectedHero(hero: object) {
-        this.selectedHero = hero;
+    setSelectedHero(index: number) {
+        if (this.selectedHeroIndex !== -1) {
+            this.chooseCharacterUIs[this.selectedHeroIndex].setSelected(false);
+        }
 
-        if (this.canBuy(hero)) {
+        this.selectedHeroIndex = index;
+        this.chooseCharacterUIs[this.selectedHeroIndex].setSelected(true);
+
+        let hero = this.gameManager.heroes[this.selectedHeroIndex];
+        let valid = this.canBuy(hero) && (this.gameManager.summoningCharacters.length < this.chooseCharacterUIs.length);
+        if (valid) {
             this.enableButton(true);
             this.labelPrice.string = hero.cost;
             this.labelPrice.color = Color.GREEN;

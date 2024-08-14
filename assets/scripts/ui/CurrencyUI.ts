@@ -6,4 +6,8 @@ export class CurrencyUI extends Component {
     @property(Label)
     public labelCurrency: Label = null!;
 
+    updateValue(val: number) {
+        this.labelCurrency.string = val.toString();
+    }
+
 }

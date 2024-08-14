@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, warn, JsonAsset, resources, SpriteFrame } from 'cc';
+import { _decorator, Component, Node, warn, JsonAsset, resources, SpriteFrame, instantiate, Vec3, Prefab, Canvas } from 'cc';
 const { ccclass, property } = _decorator;
 
 import { CurrencyUI } from "./ui/CurrencyUI";
@@ -6,6 +6,7 @@ import { TowerUI } from "./ui/TowerUI";
 import { InfoUI } from "./ui/InfoUI";
 import { HirePanelUI } from "./ui/HirePanelUI";
 import { InfoPanelUI } from "./ui/InfoPanelUI";
+import { LabelFloating } from "./ui/LabelFloating";
 
 enum GameState {
     Gameplay,
@@ -20,8 +21,17 @@ export interface CharacterSpriteData {
     character: SpriteFrame,
 };
 
+export interface CharacterSummoningData {
+    heroId: string,
+    summonCooldown: number,
+    summonDt: number,
+};
+
 @ccclass('GameManager')
 export class GameManager extends Component {
+    @property(Canvas)
+    public canvas: Canvas = null!;
+
     @property(HirePanelUI)
     public hirePanelUI: HirePanelUI = null!;
 
@@ -37,6 +47,9 @@ export class GameManager extends Component {
     @property(CurrencyUI)
     public currencyUI: CurrencyUI = null!;
 
+    @property(Prefab)
+    floatingTextPrefab: Prefab = null!;
+
     gameState: GameState = GameState.Gameplay;
 
     public buildings: Array<Object> = null!;
@@ -45,7 +58,9 @@ export class GameManager extends Component {
     public heroesSpriteDict: Object = null!;
     public heroesUIDict: Object = null!;
 
-    public currency: number;
+    public currency: number = 0;
+
+    public summoningCharacters: CharacterSummoningData[] = [];
 
     onLoad() {
         this.towerUI.init(this);
@@ -58,9 +73,11 @@ export class GameManager extends Component {
                 }
                 else if (data.name === "heroes") {
                     this.heroes = data.json.heroes;
+                    this.infoUI.updateHeroCount(0);
                 }
                 else if (data.name === "initial_state") {
                     this.currency = data.json.state.currency;
+                    this.updateCurrency(0);
                 }
             }
         });
@@ -72,8 +89,20 @@ export class GameManager extends Component {
         resources.loadDir('heroes/sprite', SpriteFrame, (err, sprites) => {
             this.heroesSpriteDict = Object.fromEntries(sprites.map(sprite => [sprite.name, sprite]));
         });
+    }
 
-        this.infoUI.updateHeroCount(0);
+    update(dt: number) {
+        for (let index = 0; index < this.summoningCharacters.length; ++index) {
+            let summoningData = this.summoningCharacters[index];
+            summoningData.summonDt += dt;
+            if (summoningData.summonDt >= summoningData.summonCooldown) {
+                // todo remove
+            }
+
+            if (this.gameState === GameState.HirePanel) {
+                this.hirePanelUI.hiredCharacterSlots[index].updateProgressBar(summoningData);
+            }
+        }
     }
 
     toggleHirePanel() {
@@ -112,12 +141,27 @@ export class GameManager extends Component {
         }
     }
 
-    hireHero(hero: Object) {
-        // TODO tween currency
-        this.currency -= hero.cost;
+    hireHero(index: number) {
+        let hero = this.heroes[index];
+
+        let node = instantiate(this.floatingTextPrefab);
+        let labelFloating = node.getComponent(LabelFloating);
+        this.canvas.node.addChild(node);
+
+        let position = this.currencyUI.node.position;
+        let startPos = new Vec3(position.x - 50.0, position.y - 100.0, position.z);
+        let endPos = new Vec3(position.x - 50.0, position.y - 25.0, position.z);
+        labelFloating.init(startPos, endPos, 0.5, -hero.cost);
+
+        this.updateCurrency(hero.cost)
+
+        let summoningIndex = this.summoningCharacters.length;
 
         let spriteData = this.getHeroSprites(hero);
-        this.hirePanelUI.hiredCharacterSlots[0].setSprite(spriteData);
+        this.hirePanelUI.hiredCharacterSlots[summoningIndex].setSprite(spriteData);
+
+        let summoningData = this.getSummoningData(hero);
+        this.summoningCharacters.push(summoningData);
     }
 
     getHeroSprites(hero: Object): CharacterSpriteData {
@@ -128,5 +172,18 @@ export class GameManager extends Component {
         let character = this.heroesSpriteDict[hero.id];
 
         return { hero, rank, type, character };
+    }
+
+    getSummoningData(hero: Object): CharacterSummoningData {
+        let heroId = hero.id;
+        let summonCooldown = hero.summonCooldown;
+        let summonDt = 0.0;
+
+        return { heroId, summonCooldown, summonDt };
+    }
+
+    updateCurrency(cost: number) {
+        this.currency -= cost;
+        this.currencyUI.updateValue(this.currency);
     }
 }
