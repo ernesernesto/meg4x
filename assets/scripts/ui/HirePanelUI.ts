@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Vec3, UITransform, tween, Label, Prefab, instantiate, Input } from 'cc';
+import { _decorator, Component, Node, Vec3, UITransform, tween, Label, Prefab, instantiate, Input, Button, Color, ScrollView } from 'cc';
 const { ccclass, property } = _decorator;
 
 import { GameManager } from "../GameManager"
@@ -16,9 +16,6 @@ export class HirePanelUI extends Component {
     @property(Node)
     hiredCharacterArea: Node = null!;
 
-    @property(Node)
-    chooseCharacterArea: Node = null!;
-
     @property(Prefab)
     hiredCharacterPrefab: Prefab = null!;
 
@@ -28,12 +25,25 @@ export class HirePanelUI extends Component {
     @property(Node)
     backgroundNode: Node = null!;
 
-    @property(Node)
-    buttonNode: Node = null!;
+    @property(ScrollView)
+    hireScrollView: ScrollView = null!;
+
+    @property(Button)
+    buttonHire: Button = null!;
+
+    @property(Label)
+    labelHire: Label = null!;
+
+    @property(Label)
+    labelPrice: Label = null!;
 
     public initialized: boolean;
 
     gameManager: GameManager = null!;
+
+    public hiredCharacterSlots: HiredCharacterUI[] = [];
+
+    selectedHero: Object;
 
     initialPanelY: number;
     visiblePanelY: number;
@@ -59,16 +69,23 @@ export class HirePanelUI extends Component {
 
             let hiredCharacterUI = node.getComponent(HiredCharacterUI);
             hiredCharacterUI.init();
+
+            this.hiredCharacterSlots.push(hiredCharacterUI);
         }
 
+        let node: Node;
         for (let i = 0; i < heroes.length; ++i) {
-            const node = instantiate(this.chooseCharacterPrefab);
-            this.chooseCharacterArea.addChild(node);
+            node = instantiate(this.chooseCharacterPrefab);
+            this.hireScrollView.content.addChild(node);
 
             let hero = gameManager.heroes[i];
+            let spriteData = this.gameManager.getHeroSprites(hero);
             let chooseCharacterUI = node.getComponent(ChooseCharacterUI);
-            chooseCharacterUI.init(this.gameManager.heroesSpriteDict, this.gameManager.heroesUIDict, hero);
+            chooseCharacterUI.init(this, spriteData);
         }
+
+        this.hireScrollView.content.getComponent(UITransform).width = (node.getComponent(UITransform).width * heroes.length);
+        this.hireScrollView.scrollToLeft();
 
         this.panelTransform = this.backgroundNode.getComponent(UITransform);
         this.initialPanelY = this.backgroundNode.position.y;
@@ -77,7 +94,9 @@ export class HirePanelUI extends Component {
         this.tweenDuration = 0.25;
 
         this.backgroundNode.on(Input.EventType.MOUSE_UP, this.onClickBackground, this);
-        this.buttonNode.on(Input.EventType.MOUSE_UP, this.onHirePressed, this);
+        this.buttonHire.node.on(Input.EventType.MOUSE_UP, this.onHirePressed, this);
+
+        this.enableButton(false);
 
         this.initialized = true;
     }
@@ -117,8 +136,35 @@ export class HirePanelUI extends Component {
 
     onHirePressed(event: EventMouse) {
         if (event.getButton() === 0) {
-            this.gameManager.toggleHirePanel();
-            console.log("hire pressed");
+            this.gameManager.hireHero(this.selectedHero);
         }
+    }
+
+    enableButton(enable: boolean) {
+        this.buttonHire.interactable = enable;
+
+        let colorHex = enable ? '#ffffffff' : '#ffffff80'
+        let color: Color = new Color().fromHEX(colorHex);
+        this.labelHire.color = color;
+        this.labelPrice.color = color;
+    }
+
+    setSelectedHero(hero: object) {
+        this.selectedHero = hero;
+
+        if (this.canBuy(hero)) {
+            this.enableButton(true);
+            this.labelPrice.string = hero.cost;
+            this.labelPrice.color = Color.GREEN;
+        }
+        else {
+            this.enableButton(false);
+            this.labelPrice.string = hero.cost;
+            this.labelPrice.color = Color.RED;
+        }
+    }
+
+    canBuy(hero: object): boolean {
+        return this.gameManager.currency >= hero.cost
     }
 }

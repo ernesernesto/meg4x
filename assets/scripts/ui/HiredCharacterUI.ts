@@ -24,6 +24,13 @@ export class HiredCharacterUI extends Component {
         this.progressBar.node.scale.x = 0.0;
     }
 
-    setSprite() {
+    setSprite(data: CharacterSpriteData) {
+        this.rank.node.active = true;
+        this.type.node.active = true;
+        this.character.node.active = true;
+
+        this.rank.spriteFrame = data.rank;
+        this.type.spriteFrame = data.type;
+        this.character.spriteFrame = data.character;
     }
 }

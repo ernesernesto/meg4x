@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Vec3, UITransform, tween, Label, Prefab, instantiate, Input } from 'cc';
+import { _decorator, Component, Node, Vec3, UITransform, tween, Label, Prefab, instantiate, Input, Button } from 'cc';
 const { ccclass, property } = _decorator;
 
 import { GameManager } from "../GameManager"
@@ -9,13 +9,13 @@ export class InfoPanelUI extends Component {
 
     tweenDuration: number;
 
-    @property(Node)
-    closeButtonNode: Node = null!;
+    @property(Button)
+    buttonClose: Button = null!;
 
     init(gameManager: GameManager,) {
         this.gameManager = gameManager;
 
-        this.closeButtonNode.on(Input.EventType.MOUSE_UP, this.onClosePressed, this);
+        this.buttonClose.node.on(Input.EventType.MOUSE_UP, this.onClosePressed, this);
 
         //this.labelTitle.string = building.name;
         //this.labelDescription.string = building.description;

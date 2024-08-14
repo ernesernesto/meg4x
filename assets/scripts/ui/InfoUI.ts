@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, input, Input, EventMouse, EventTouch } from 'cc';
+import { _decorator, Component, Node, Input, EventMouse, Label } from 'cc';
 const { ccclass, property } = _decorator;
 
 import { GameManager } from "../GameManager"
@@ -6,6 +6,13 @@ import { GameManager } from "../GameManager"
 @ccclass('InfoUI')
 export class InfoUI extends Component {
     gameManager: GameManager = null!;
+
+    @property(Node)
+    notifNode: Node = null!;
+
+    @property(Label)
+    heroCountLabel: Label = null!;
+
 
     init(gameManager: GameManager) {
         this.gameManager = gameManager;
@@ -16,6 +23,16 @@ export class InfoUI extends Component {
     onMouseUp(event: EventMouse) {
         if (event.getButton() === 0) {
             this.gameManager.toggleInfoPanel();
+        }
+    }
+
+    updateHeroCount(count: number) {
+        if (count > 0) {
+            this.notifNode.active = true;
+            this.heroCountLabel.string = number;
+        }
+        else {
+            this.notifNode.active = false;
         }
     }
 }

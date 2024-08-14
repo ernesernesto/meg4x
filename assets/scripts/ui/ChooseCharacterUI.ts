@@ -1,6 +1,8 @@
 import { _decorator, Component, Node, Sprite } from 'cc';
 const { ccclass, property } = _decorator;
 
+import { HirePanelUI } from "./HirePanelUI"
+
 @ccclass('ChooseCharacterUI')
 export class ChooseCharacterUI extends Component {
     @property(Sprite)
@@ -12,15 +14,17 @@ export class ChooseCharacterUI extends Component {
     @property(Sprite)
     character: Sprite = null!;
 
-    init(heroesSpriteDict: Object, heroesUIDict: Object, hero: Object) {
-        let rankId = `${hero.rank}_highlight`;
-        let rankSprite = heroesUIDict[rankId];
-        let typeId = `att_${hero.type}`;
-        let typeSprite = heroesUIDict[typeId];
-        let characterSprite = heroesSpriteDict[hero.id];
+    hirePanelUI: HirePanelUI = null!;
 
-        this.rank.spriteFrame = rankSprite;
-        this.type.spriteFrame = typeSprite;
-        this.character.spriteFrame = characterSprite;
+    init(hirePanelUI: HirePanelUI, data: CharacterSpriteData) {
+        this.hirePanelUI = hirePanelUI;
+
+        this.rank.spriteFrame = data.rank;
+        this.type.spriteFrame = data.type;
+        this.character.spriteFrame = data.character;
+
+        this.node.on(Node.EventType.MOUSE_DOWN, (event) => {
+            hirePanelUI.setSelectedHero(data.hero);
+        }, this);
     }
 }

@@ -13,6 +13,13 @@ enum GameState {
     InfoPanel,
 };
 
+export interface CharacterSpriteData {
+    hero: Object,
+    rank: SpriteFrame,
+    type: SpriteFrame,
+    character: SpriteFrame,
+};
+
 @ccclass('GameManager')
 export class GameManager extends Component {
     @property(HirePanelUI)
@@ -38,6 +45,8 @@ export class GameManager extends Component {
     public heroesSpriteDict: Object = null!;
     public heroesUIDict: Object = null!;
 
+    public currency: number;
+
     onLoad() {
         this.towerUI.init(this);
         this.infoUI.init(this);
@@ -51,7 +60,7 @@ export class GameManager extends Component {
                     this.heroes = data.json.heroes;
                 }
                 else if (data.name === "initial_state") {
-                    let test = "";
+                    this.currency = data.json.state.currency;
                 }
             }
         });
@@ -63,17 +72,8 @@ export class GameManager extends Component {
         resources.loadDir('heroes/sprite', SpriteFrame, (err, sprites) => {
             this.heroesSpriteDict = Object.fromEntries(sprites.map(sprite => [sprite.name, sprite]));
         });
-    }
 
-    start() {
-    }
-
-    loadHeroes(data: json) {
-        for (let entry of data.heroes) {
-            console.log(entry.id);
-            console.log(entry.name);
-            console.log(entry.description);
-        }
+        this.infoUI.updateHeroCount(0);
     }
 
     toggleHirePanel() {
@@ -110,5 +110,23 @@ export class GameManager extends Component {
                 this.infoPanelUI.node.active = false;
             }
         }
+    }
+
+    hireHero(hero: Object) {
+        // TODO tween currency
+        this.currency -= hero.cost;
+
+        let spriteData = this.getHeroSprites(hero);
+        this.hirePanelUI.hiredCharacterSlots[0].setSprite(spriteData);
+    }
+
+    getHeroSprites(hero: Object): CharacterSpriteData {
+        let rankId = `${hero.rank}_highlight`;
+        let rank = this.heroesUIDict[rankId];
+        let typeId = `att_${hero.type}`;
+        let type = this.heroesUIDict[typeId];
+        let character = this.heroesSpriteDict[hero.id];
+
+        return { hero, rank, type, character };
     }
 }
