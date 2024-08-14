@@ -1,7 +1,8 @@
-import { _decorator, Component, Node, Vec3, UITransform, tween, Label, Prefab, instantiate, Input, Button } from 'cc';
+import { _decorator, Component, Node, Vec3, UITransform, tween, Label, Prefab, instantiate, Input, Button, ScrollView } from 'cc';
 const { ccclass, property } = _decorator;
 
 import { GameManager } from "../GameManager"
+import { InfoCharacterUI } from "./InfoCharacterUI"
 
 @ccclass('InfoPanelUI')
 export class InfoPanelUI extends Component {
@@ -12,41 +13,33 @@ export class InfoPanelUI extends Component {
     @property(Button)
     buttonClose: Button = null!;
 
+    @property(Prefab)
+    infoCharacterPrefab: Prefab = null!;
+
+    @property(Node)
+    infoCharacterArea: Node = null!;
+
+    @property(ScrollView)
+    infoScrollView: ScrollView = null!;
+
+    public infoCharacters: InfoCharacterUI[] = [];
+
     init(gameManager: GameManager,) {
         this.gameManager = gameManager;
 
-        this.buttonClose.node.on(Input.EventType.MOUSE_UP, this.onClosePressed, this);
+        this.buttonClose.node.on(Button.EventType.CLICK, this.onClosePressed, this);
+    }
 
-        //this.labelTitle.string = building.name;
-        //this.labelDescription.string = building.description;
+    addSpawnedHeroes(gameManager: GameManager, heroId: string) {
+        const node = instantiate(this.infoCharacterPrefab);
+        this.infoCharacterArea.addChild(node);
 
-        //for (let i = 0; i < building.settings.hireSlots; ++i) {
-        //    const node = instantiate(this.hiredCharacterPrefab);
-        //    this.hiredCharacterArea.addChild(node);
+        let infoCharacterUI = node.getComponent(InfoCharacterUI);
+        infoCharacterUI.init(gameManager, heroId);
 
-        //    let hiredCharacterUI = node.getComponent(HiredCharacterUI);
-        //    hiredCharacterUI.init();
-        //}
+        this.infoCharacters.push(infoCharacterUI);
 
-        //for (let i = 0; i < heroes.length; ++i) {
-        //    const node = instantiate(this.chooseCharacterPrefab);
-        //    this.chooseCharacterArea.addChild(node);
-
-        //    let hero = gameManager.heroes[i];
-        //    let chooseCharacterUI = node.getComponent(ChooseCharacterUI);
-        //    chooseCharacterUI.init(this.gameManager.heroesSpriteDict, this.gameManager.heroesUIDict, hero);
-        //}
-
-        //this.panelTransform = this.backgroundNode.getComponent(UITransform);
-        //this.initialPanelY = this.backgroundNode.position.y;
-        //this.visiblePanelY = this.initialPanelY + this.panelTransform.height;
-
-        //this.tweenDuration = 0.25;
-
-        //this.backgroundNode.on(Input.EventType.MOUSE_UP, this.onClickBackground, this);
-        //this.buttonNode.on(Input.EventType.MOUSE_UP, this.onHirePressed, this);
-
-        //this.initialized = true;
+        this.infoScrollView.content.getComponent(UITransform).height = (infoCharacterUI.node.getComponent(UITransform).height * (this.infoCharacters.length + 1));
     }
 
     show() {
@@ -76,9 +69,7 @@ export class InfoPanelUI extends Component {
             }).start();
     }
 
-    onClosePressed(event: EventMouse) {
-        if (event.getButton() === 0) {
-            this.gameManager.toggleInfoPanel();
-        }
+    onClosePressed(button: Button) {
+        this.gameManager.toggleInfoPanel();
     }
 }

@@ -29,7 +29,7 @@ export class InfoUI extends Component {
     updateHeroCount(count: number) {
         if (count > 0) {
             this.notifNode.active = true;
-            this.heroCountLabel.string = number;
+            this.heroCountLabel.string = count.toString();
         }
         else {
             this.notifNode.active = false;

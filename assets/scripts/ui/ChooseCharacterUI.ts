@@ -25,7 +25,7 @@ export class ChooseCharacterUI extends Component {
         this.index = index;
 
         let hero = gameManager.heroes[this.index];
-        let data = gameManager.getHeroSprites(hero);
+        let data = gameManager.getHeroSprites(hero.id);
 
         this.rank.spriteFrame = data.rank;
         this.type.spriteFrame = data.type;

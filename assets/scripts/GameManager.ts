@@ -55,6 +55,7 @@ export class GameManager extends Component {
     public buildings: Array<Object> = null!;
     public heroes: Array<Object> = null!;
 
+    public heroesDict: Object = null!;
     public heroesSpriteDict: Object = null!;
     public heroesUIDict: Object = null!;
 
@@ -73,6 +74,7 @@ export class GameManager extends Component {
                 }
                 else if (data.name === "heroes") {
                     this.heroes = data.json.heroes;
+                    this.heroesDict = Object.fromEntries(data.json.heroes.map(hero => [hero.id, hero]));
                     this.infoUI.updateHeroCount(0);
                 }
                 else if (data.name === "initial_state") {
@@ -92,15 +94,30 @@ export class GameManager extends Component {
     }
 
     update(dt: number) {
+        let dirty = false;
         for (let index = 0; index < this.summoningCharacters.length; ++index) {
             let summoningData = this.summoningCharacters[index];
             summoningData.summonDt += dt;
-            if (summoningData.summonDt >= summoningData.summonCooldown) {
-                // todo remove
-            }
 
             if (this.gameState === GameState.HirePanel) {
                 this.hirePanelUI.hiredCharacterSlots[index].updateProgressBar(summoningData);
+            }
+
+            if (summoningData.summonDt >= summoningData.summonCooldown) {
+                this.summoningCharacters.splice(index, 1);
+                this.infoPanelUI.addSpawnedHeroes(this, summoningData.heroId);
+                dirty = true;
+            }
+        }
+
+        if (dirty) {
+            this.hirePanelUI.refresh(this.summoningCharacters);
+
+            let count = this.infoPanelUI.infoCharacters.length;
+            this.infoUI.updateHeroCount(count);
+
+            if (this.summoningCharacters.length === 0) {
+                this.towerUI.showSummonIndicator(false);
             }
         }
     }
@@ -115,10 +132,16 @@ export class GameManager extends Component {
                     this.hirePanelUI.init(this);
                 }
                 this.hirePanelUI.show();
+
+                this.towerUI.showSummonIndicator(false);
             }
             else if (this.gameState === GameState.HirePanel) {
                 this.gameState = GameState.Gameplay;
                 this.hirePanelUI.hide();
+
+                if (this.summoningCharacters.length != 0) {
+                    this.towerUI.showSummonIndicator(true);
+                }
             }
         }
     }
@@ -143,7 +166,6 @@ export class GameManager extends Component {
 
     hireHero(index: number) {
         let hero = this.heroes[index];
-
         let node = instantiate(this.floatingTextPrefab);
         let labelFloating = node.getComponent(LabelFloating);
         this.canvas.node.addChild(node);
@@ -157,25 +179,26 @@ export class GameManager extends Component {
 
         let summoningIndex = this.summoningCharacters.length;
 
-        let spriteData = this.getHeroSprites(hero);
+        let spriteData = this.getHeroSprites(hero.id);
         this.hirePanelUI.hiredCharacterSlots[summoningIndex].setSprite(spriteData);
 
-        let summoningData = this.getSummoningData(hero);
+        let summoningData = this.getSummoningData(hero.id);
         this.summoningCharacters.push(summoningData);
     }
 
-    getHeroSprites(hero: Object): CharacterSpriteData {
+    getHeroSprites(heroId: string): CharacterSpriteData {
+        let hero = this.heroesDict[heroId];
         let rankId = `${hero.rank}_highlight`;
         let rank = this.heroesUIDict[rankId];
         let typeId = `att_${hero.type}`;
         let type = this.heroesUIDict[typeId];
-        let character = this.heroesSpriteDict[hero.id];
+        let character = this.heroesSpriteDict[heroId];
 
         return { hero, rank, type, character };
     }
 
-    getSummoningData(hero: Object): CharacterSummoningData {
-        let heroId = hero.id;
+    getSummoningData(heroId: string): CharacterSummoningData {
+        let hero = this.heroesDict[heroId];
         let summonCooldown = hero.summonCooldown;
         let summonDt = 0.0;
 

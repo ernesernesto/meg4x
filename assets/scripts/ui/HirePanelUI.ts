@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Vec3, UITransform, tween, Label, Prefab, instantiate, Input, Button, Color, ScrollView } from 'cc';
+import { _decorator, Component, Node, Vec3, UITransform, tween, Label, Prefab, instantiate, Input, Button, Color, ScrollView, warn } from 'cc';
 const { ccclass, property } = _decorator;
 
 import { GameManager } from "../GameManager"
@@ -52,6 +52,8 @@ export class HirePanelUI extends Component {
     panelTransform: UITransform;
     tweenDuration: number;
 
+    hireSlots: number;
+
     init(gameManager: GameManager,) {
         // Note only now handle building 0 since buildings.json only have 1 data
         let buildings = gameManager.buildings;
@@ -64,7 +66,8 @@ export class HirePanelUI extends Component {
         this.labelTitle.string = building.name;
         this.labelDescription.string = building.description;
 
-        for (let i = 0; i < building.settings.hireSlots; ++i) {
+        this.hireSlots = building.settings.hireSlots;
+        for (let i = 0; i < this.hireSlots; ++i) {
             const node = instantiate(this.hiredCharacterPrefab);
             this.hiredCharacterArea.addChild(node);
 
@@ -95,11 +98,26 @@ export class HirePanelUI extends Component {
         this.tweenDuration = 0.25;
 
         this.backgroundNode.on(Input.EventType.MOUSE_UP, this.onClickBackground, this);
-        this.buttonHire.node.on(Input.EventType.MOUSE_UP, this.onHirePressed, this);
+        this.buttonHire.node.on(Button.EventType.CLICK, this.onHirePressed, this);
 
         this.enableButton(false);
 
         this.initialized = true;
+    }
+
+    refresh() {
+        for (let i = 0; i < this.hireSlots; ++i) {
+            if (i < this.gameManager.summoningCharacters.length) {
+                let heroId = this.gameManager.summoningCharacters[i].heroId;
+                let spriteData = this.gameManager.getHeroSprites(heroId);
+                this.hiredCharacterSlots[i].setSprite(spriteData);
+            }
+            else {
+                this.hiredCharacterSlots[i].init();
+            }
+        }
+
+        this.enableButton(true);
     }
 
     show() {
@@ -135,9 +153,11 @@ export class HirePanelUI extends Component {
         }
     }
 
-    onHirePressed(event: EventMouse) {
-        if (event.getButton() === 0) {
-            this.gameManager.hireHero(this.selectedHeroIndex);
+    onHirePressed(button: Button) {
+        this.gameManager.hireHero(this.selectedHeroIndex);
+
+        if (this.gameManager.summoningCharacters.length >= this.hireSlots) {
+            this.enableButton(false);
         }
     }
 
@@ -159,7 +179,7 @@ export class HirePanelUI extends Component {
         this.chooseCharacterUIs[this.selectedHeroIndex].setSelected(true);
 
         let hero = this.gameManager.heroes[this.selectedHeroIndex];
-        let valid = this.canBuy(hero) && (this.gameManager.summoningCharacters.length < this.chooseCharacterUIs.length);
+        let valid = this.canBuy(hero) && (this.gameManager.summoningCharacters.length < this.hireSlots);
         if (valid) {
             this.enableButton(true);
             this.labelPrice.string = hero.cost;
