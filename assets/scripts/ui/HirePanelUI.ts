@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Vec3, UITransform, tween, Label, Prefab, instantiate, Input, Button, Color, ScrollView, warn } from 'cc';
+import { _decorator, Component, Node, Vec3, UITransform, tween, Label, Prefab, instantiate, Input, Button, Color, ScrollView, EventMouse, warn } from 'cc';
 const { ccclass, property } = _decorator;
 
 import { GameManager } from "../GameManager"
@@ -44,7 +44,7 @@ export class HirePanelUI extends Component {
     public hiredCharacterSlots: HiredCharacterUI[] = [];
     chooseCharacterUIs: ChooseCharacterUI[] = [];
 
-    selectedHeroIndex: number = -1;
+    selectedHeroIndex: number;
 
     initialPanelY: number;
     visiblePanelY: number;
@@ -54,7 +54,7 @@ export class HirePanelUI extends Component {
 
     hireSlots: number;
 
-    init(gameManager: GameManager,) {
+    init(gameManager: GameManager) {
         // Note only now handle building 0 since buildings.json only have 1 data
         let buildings = gameManager.buildings;
         let building = buildings[0];
@@ -82,8 +82,10 @@ export class HirePanelUI extends Component {
             node = instantiate(this.chooseCharacterPrefab);
             this.hireScrollView.content.addChild(node);
 
+            let hero = heroes[i];
             let chooseCharacterUI = node.getComponent(ChooseCharacterUI);
-            chooseCharacterUI.init(this, this.gameManager, i);
+            let spriteData = this.gameManager.getHeroSprites(hero.id)
+            chooseCharacterUI.init(this, spriteData, i);
 
             this.chooseCharacterUIs.push(chooseCharacterUI);
         }
@@ -99,8 +101,6 @@ export class HirePanelUI extends Component {
 
         this.backgroundNode.on(Input.EventType.MOUSE_UP, this.onClickBackground, this);
         this.buttonHire.node.on(Button.EventType.CLICK, this.onHirePressed, this);
-
-        this.enableButton(false);
 
         this.initialized = true;
     }
@@ -131,6 +131,9 @@ export class HirePanelUI extends Component {
                     this.backgroundNode.position = target;
                 }
             }).start();
+
+        this.selectedHeroIndex = -1;
+        this.enableButton(false);
     }
 
     hide() {
@@ -138,13 +141,18 @@ export class HirePanelUI extends Component {
         let targetTmp = this.visiblePanelY - currentPanelY;
         let targetY = currentPanelY - (this.panelTransform.height - targetTmp);
 
-
         tween(this.backgroundNode.position)
             .to(this.tweenDuration, new Vec3(0, targetY, 0), {
                 onUpdate: (target: Vec3, _: number) => {
                     this.backgroundNode.position = target;
                 }
             }).start();
+
+        if (this.selectedHeroIndex !== -1) {
+            this.chooseCharacterUIs[this.selectedHeroIndex].setSelected(false);
+        }
+
+        this.selectedHeroIndex = -1;
     }
 
     onClickBackground(event: EventMouse) {
@@ -153,7 +161,7 @@ export class HirePanelUI extends Component {
         }
     }
 
-    onHirePressed(button: Button) {
+    onHirePressed(_: Button) {
         this.gameManager.hireHero(this.selectedHeroIndex);
 
         if (this.gameManager.summoningCharacters.length >= this.hireSlots) {

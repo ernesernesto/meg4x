@@ -20,12 +20,9 @@ export class ChooseCharacterUI extends Component {
     hirePanelUI: HirePanelUI = null!;
     index: number;
 
-    init(hirePanelUI: HirePanelUI, gameManager: GameManager, index: number) {
+    init(hirePanelUI: HirePanelUI, data: CharacterSpriteData, index: number) {
         this.hirePanelUI = hirePanelUI;
         this.index = index;
-
-        let hero = gameManager.heroes[this.index];
-        let data = gameManager.getHeroSprites(hero.id);
 
         this.rank.spriteFrame = data.rank;
         this.type.spriteFrame = data.type;
@@ -33,8 +30,8 @@ export class ChooseCharacterUI extends Component {
 
         this.setSelected(false);
 
-        this.node.on(Node.EventType.MOUSE_DOWN, (event) => {
-            hirePanelUI.setSelectedHero(index);
+        this.node.on(Node.EventType.MOUSE_DOWN, (_) => {
+            this.hirePanelUI.setSelectedHero(index);
         }, this);
     }
 

@@ -6,10 +6,6 @@ import { InfoCharacterUI } from "./InfoCharacterUI"
 
 @ccclass('InfoPanelUI')
 export class InfoPanelUI extends Component {
-    gameManager: GameManager = null!;
-
-    tweenDuration: number;
-
     @property(Button)
     buttonClose: Button = null!;
 
@@ -24,6 +20,10 @@ export class InfoPanelUI extends Component {
 
     public infoCharacters: InfoCharacterUI[] = [];
 
+    gameManager: GameManager = null!;
+
+    tweenDuration: number;
+
     init(gameManager: GameManager,) {
         this.gameManager = gameManager;
 
@@ -31,7 +31,7 @@ export class InfoPanelUI extends Component {
     }
 
     addSpawnedHeroes(gameManager: GameManager, heroId: string) {
-        const node = instantiate(this.infoCharacterPrefab);
+        let node = instantiate(this.infoCharacterPrefab);
         this.infoCharacterArea.addChild(node);
 
         let infoCharacterUI = node.getComponent(InfoCharacterUI);
@@ -53,13 +53,14 @@ export class InfoPanelUI extends Component {
                     this.backgroundNode.position = target;
                 }
             }).start();
+
+        this.infoScrollView.scrollToTop();
     }
 
     hide() {
         let currentPanelY = this.backgroundNode.position.y;
         let targetTmp = this.visiblePanelY - currentPanelY;
         let targetY = currentPanelY - (this.panelTransform.height - targetTmp);
-
 
         tween(this.backgroundNode.position)
             .to(this.tweenDuration, new Vec3(0, targetY, 0), {
@@ -69,7 +70,7 @@ export class InfoPanelUI extends Component {
             }).start();
     }
 
-    onClosePressed(button: Button) {
+    onClosePressed(_: Button) {
         this.gameManager.toggleInfoPanel();
     }
 }

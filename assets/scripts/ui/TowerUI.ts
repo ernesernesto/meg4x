@@ -5,7 +5,6 @@ import { GameManager } from "../GameManager"
 
 @ccclass('TowerUI')
 export class TowerUI extends Component {
-
     @property(Sprite)
     summonIndicator: Sprite = null!;
 
